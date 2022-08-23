@@ -1,0 +1,93 @@
+import "./styles.css";
+
+class Ball {
+  constructor() {
+    this.ballTop = 0;
+    this.ballLeft = 0;
+    this.ball = document.getElementById("ball");
+    this.block = document.getElementById("block");
+    this.listenEvents();
+  }
+
+  listenEvents() {
+    this.ball.onmousedown = (ev) => this.handleMouseDown(ev);
+  }
+  handleMouseDown(ev) {
+    this.ball.style.position = "absolute";
+    this.ball.style.zIndex = "2";
+
+    let coords = this.getCoords(this.ball);
+    let shiftX = ev.pageX - coords.left;
+    let shiftY = ev.pageY - coords.top;
+    this.moveAt(ev, shiftX, shiftY);
+
+    document.onmousemove = (ev) => this.moveAt(ev, shiftX, shiftY);
+
+    this.ball.onmouseup = (ev) => this.stopMove();
+    this.ball.ondragstart = function () {
+      return false;
+    };
+  }
+  stopMove() {
+    document.onmousemove = null;
+    this.ball.onmouseup = null;
+  }
+  saveStartCoords(ev, shiftX, shiftY) {
+    this.ballLeft = ev.pageX - shiftX + "px";
+    this.ballTop = ev.pageY - shiftY + "px";
+  }
+  getCoords(elem) {
+    let box = elem.getBoundingClientRect();
+    return {
+      top: box.top + pageYOffset,
+      left: box.left + pageXOffset
+    };
+  }
+  moveAt(ev, shiftX, shiftY) {
+    this.ball.style.left = ev.pageX - shiftX + "px";
+    this.ball.style.top = ev.pageY - shiftY + "px";
+    this.setToStartCoords(ev, shiftX, shiftY);
+  }
+  setToStartCoords(ev, shiftX, shiftY) {
+    if (this.elemIsOnOther()){
+      this.ball.style.left = this.ballLeft;
+      this.ball.style.top = this.ballTop;
+      this.stopMove()
+    }else {
+      this.saveStartCoords(ev, shiftX, shiftY);
+    }
+  }
+  elemIsOnOther(){
+    let leftInterval = -(this.getBlockCoords(this.ball).left - this.getBlockCoords(this.block).left);
+    let rightInterval = -(this.getBlockCoords(this.ball).right - this.getBlockCoords(this.block).right);
+    let topInterval = this.getBlockCoords(this.ball).top - this.getBlockCoords(this.block).top;
+    let bottomInterval = this.getBlockCoords(this.ball).bottom - this.getBlockCoords(this.block).bottom;
+    return ((this.getBlockCoords(this.ball).right >= this.getBlockCoords(this.block).right &&
+    leftInterval < this.ball.offsetWidth) || 
+    (this.getBlockCoords(this.ball).left >= this.getBlockCoords(this.block).left &&
+    rightInterval < this.ball.offsetWidth)) &&
+    ((this.getBlockCoords(this.ball).top >= this.getBlockCoords(this.block).top &&
+    topInterval < this.ball.offsetHeight) || 
+    (this.getBlockCoords(this.ball).bottom >= this.getBlockCoords(this.block).bottom &&
+    bottomInterval < this.ball.offsetHeight))
+  }
+
+  getBlockCoords(elem){
+    let left = window.getComputedStyle(elem).left;
+    let top = window.getComputedStyle(elem).top;
+    let right = window.getComputedStyle(elem).right;
+    let bottom = window.getComputedStyle(elem).bottom;
+    left = +left.match(/[0-9/.]+/g)
+    top = +top.match(/[0-9/.]+/g)
+    right = +right.match(/[0-9/.]+/g)
+    bottom = +bottom.match(/[0-9/.]+/g)
+    return {
+      left,
+      top,
+      right,
+      bottom,
+    }
+  }
+}
+
+new Ball();
